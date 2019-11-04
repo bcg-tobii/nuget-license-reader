@@ -6,6 +6,9 @@
     <RootNamespace>nuget_license_reader</RootNamespace>
   </PropertyGroup>
 
-  <PackageReference Include="NuGet.Configuration" Version="5.3.1" />
-  
+  <ItemGroup>
+    <PackageReference Include="NuGet.Configuration" Version="5.3.1" />
+  </ItemGroup>
+
+
 </Project>

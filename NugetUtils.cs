@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using NuGet.Configuration;
 using nuget_license_reader;
 
 namespace NugetUtility
@@ -15,7 +16,7 @@ namespace NugetUtility
     {
 
         private const string _nugetUrl = "https://api.nuget.org/v3-flatcontainer/";
-
+        static string _nugetLocalPath = SettingsUtility.GetGlobalPackagesFolder(Settings.LoadDefaultSettings(null));
         public static async Task<bool> WriteNugetLicensesToDisk(string csProjFile, string rootPath)
         {
             if(File.Exists(csProjFile))
@@ -60,7 +61,7 @@ namespace NugetUtility
                 using (var httpClient = new HttpClient {Timeout = TimeSpan.FromSeconds(10)})
                 {
                     string requestUrl = _nugetUrl + referenceName + "/" + versionNumber + "/" + referenceName + ".nuspec";
-                    Console.WriteLine(requestUrl);
+                    //Console.WriteLine(requestUrl);
                     try
                     {
                         HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, requestUrl);
@@ -72,6 +73,8 @@ namespace NugetUtility
                         {
                             try
                             {
+                                Console.WriteLine($"Trying to fetch a license for {referenceName}");
+
                                 Package result = (Package) serializer.Deserialize(new NamespaceIgnorantXmlTextReader(writer));
                                 if(licenses.ContainsKey(reference))
                                 {
@@ -83,14 +86,21 @@ namespace NugetUtility
                                 {
                                     Directory.CreateDirectory(dir);
                                 }
-                                if(!String.IsNullOrEmpty(result.Metadata.LicenseUrl) && result.Metadata.LicenseUrl != @"https://aka.ms/deprecateLicenseUrl")
+                                if (result.Metadata.License != null && !String.IsNullOrEmpty(result.Metadata.License.Type) && result.Metadata.License.Type == "file")
+                                {
+                                    string licensePath = $"{_nugetLocalPath}{Path.DirectorySeparatorChar}"+
+                                    $"{result.Metadata.Id.ToLower()}{Path.DirectorySeparatorChar}"+
+                                    $"{result.Metadata.Version.ToLower()}{Path.DirectorySeparatorChar}"+
+                                    $"{result.Metadata.License.Text}";
+                                    File.Copy(licensePath,($"{dir}{Path.DirectorySeparatorChar}license.txt"),true);
+                                }
+                                else if(!String.IsNullOrEmpty(result.Metadata.LicenseUrl) && result.Metadata.LicenseUrl != @"https://aka.ms/deprecateLicenseUrl")
                                 {
                                     req = new HttpRequestMessage(HttpMethod.Get, result.Metadata.LicenseUrl);
                                     response = await httpClient.SendAsync(req);
                                     responseText = await response.Content.ReadAsStringAsync();
                                     File.WriteAllText($"{dir}{Path.DirectorySeparatorChar}license.txt",responseText);
                                 }
-                                
                                 else if(!String.IsNullOrEmpty(result.Metadata.ProjectUrl))
                                 {
                                     string projPath = result.Metadata.ProjectUrl;
@@ -103,6 +113,7 @@ namespace NugetUtility
                                 }
                                 else
                                 {
+                                    Console.WriteLine($"failed getting a license for {result.Metadata.Id}");
                                     File.WriteAllText($"{dir}{Path.DirectorySeparatorChar}unknownlicense.txt", "Unknown");
                                 }
                             }

@@ -6,11 +6,15 @@ namespace nuget_license_reader
     {
         static void Main(string[] args)
         {
-            
-            var a1 = NugetUtils.WriteNugetLicensesToDisk(@"/home/tobii.intra/bcg/GIT/flora-tools/FloraVisualizer/FloraVisualizer.csproj",
-            @"/home/tobii.intra/bcg/GIT/flora-tools/FloraVisualizer/");
+            if (args.Length != 2)
+            {
+                System.Console.WriteLine("Usage: <pathTo .csproj> <output path>");
+                return;
+            }
+            string csProjFile = args[0];
+            string outputDir = args[1];
+            var a1 = NugetUtils.WriteNugetLicensesToDisk(csProjFile, outputDir);
             a1.Wait();
-
         }
     }
 }
