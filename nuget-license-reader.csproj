@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <RootNamespace>nuget_license_reader</RootNamespace>
+  </PropertyGroup>
+
+  <PackageReference Include="NuGet.Configuration" Version="5.3.1" />
+  
+</Project>
